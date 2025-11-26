@@ -63,9 +63,9 @@ float cki = 0.0586;
 float ckd = 0.1465;
 
 
-float pkp = 24.2;// 35;// 24.2;//50;// 55
-float pki = 40.8;//3.5;//40.8;//10;//
-float pkd = 3.58;//60;//3.58;//90;//
+float pkp = 24.2;
+float pki = 40.8;
+float pkd = 3.58;
 
 TaskHandle_t ControlTaskHandle;
 TaskHandle_t PrintTaskHandle;
@@ -131,33 +131,10 @@ void loop() {
       oldAngle           = theta;
       oldTime            = micros();
     }
-
-    // if (digitalRead(buttonPin) == LOW){
-    //   count++;
-    //   if (count > 200000){
-    //     excite = true;
-    //     count = 0;
-    //   }
-    // }
-
     //Pass if the button is not pushed
     if (!start) {
       return;
     }
-    
-    // float newAngle = theta;
-    // dTheta = (newAngle - oldAngle);
-    // oldAngle = newAngle;
-
-    // //angular_velo = (dTheta / dt) * 1000.0;  // rad/s
-    // float new_angular_velo = (dTheta / dt) * 1000.0;  // rad/s
-    // angular_velo = 0.3 * new_angular_velo + (1 - 0.3) * angular_velo;
-
-    // float newTheta_dot = angular_velo;
-    // dTheta_dot = (newTheta_dot - oldTheta_dot);
-    // oldTheta_dot = newTheta_dot;
-
-    // angular_ac = (dTheta_dot / dt) * 1000.0;  // rad/s^2
 
 ///////////////limit x position////////////////////////////////
 //****recommend to use limit switch to determine whether it need to home
@@ -168,9 +145,6 @@ void loop() {
     if ((170*M_PI/180 <= theta) && (theta <= 190*M_PI/180)){
       begin = true;
       if (initSet){
-        // cart_ac            = 0;
-        // cart_velo         = 0;
-        // cart_position     = 0;
         offset      = 0;
         offset_dot  = 0;
         offset_sum  = 0;
@@ -180,21 +154,11 @@ void loop() {
         initSet     = false;
       }
     }
-    else if (!((170*M_PI/180 <= theta) && (theta <= 190*M_PI/180))){//<--------------here is a problem
+    else if (!((170*M_PI/180 <= theta) && (theta <= 190*M_PI/180))){
       begin = false;
       origin = cart_position;
       if (!initSet){
         initSet     = true;
-        //stop        = true;
-        //setzero
-        // cart_ac            = 0;
-        // cart_velo          = 0;
-        // cart_position      = 0;
-        // theta              = 0;
-        // angular_velo       = 0;
-        // angular_ac         = 0;
-        // oldAngle           = 0;
-        // oldTheta_dot       = 0;
       }
     } 
     newTime = micros();
@@ -219,26 +183,8 @@ void loop() {
     //////////////////////////Control Part Begin//////////////////////////////////
       if (begin) {
         alpha = 0.15;
-      // float offset_temp = offset;
-      // offset = origin + cart_position;
-      // offset_dot = (offset - offset_temp) * 1000 / dt;
-      // offset_sum = offset_sum + offset / 1000 * dt;
-      // C2_u = (offset * ckp) + (offset_dot * ckd) + (offset_sum * cki);
         static int counter, toggle, toggle_add = 1;
         static float ref_2;
-
-      // toggle += toggle_add;
-      // if (toggle > 1000)
-      // {
-      //   toggle_add = -toggle_add;
-      //   ref_2 = -0.08;
-      // }
-      // if (toggle < -1000)
-      // {
-      //   toggle_add = -toggle_add;
-      //   ref_2 = 0.08;
-      // }
-
         ref_2 = 0;
 
         counter++;
@@ -265,8 +211,6 @@ void loop() {
         //==================================================//
         cart_ac = constrain(pkp * error + pkd * error_dot + error_sum * pki, -tunerA, tunerA);
         cart_velo = constrain(cart_velo + cart_ac * (float)dt * 0.001, -tunerV, tunerV);
-        // float new_velo = constrain(cart_velo + cart_ac * (float)dt * 0.001, -tunerV, tunerV);
-        // cart_velo = 0.3 * new_velo + (1 - 0.3) * cart_velo;
       }
     //////////////////////////Control Part End//////////////////////////////////
     //////////////////////////Swing Up Begin//////////////////////////////////
@@ -318,17 +262,6 @@ void loop() {
         cart_velo = cart_velo + cart_ac * (float)dt * 0.001;  // m/s
       }
     //////////////////////////Swing Up End//////////////////////////////////
-    // else{
-    //   cart_velo = 0;
-    // }
-
-    //check infinite spin
-    // helicopter += sgn(angular_velo);
-    // if (helicopter == 1000 && stop == false){
-    //   stop = true;
-    //   helicopter = 0;
-    // }
-
       if (stop){
         if (stopFlag){
           capturedTime = millis();
@@ -369,19 +302,6 @@ void printTask(void *parameter) {
     while (thetaP < 0) thetaP += 360;
     while (thetaP >= 360) thetaP -= 360;
     if (start) {
-      // ตัวอย่างการพิมพ์ CSV
-      // if (excite){
-      // Serial.print("excited");
-      // }
-      // if (home){
-      // Serial.print("home");
-      // }
-      // if (begin){
-      // Serial.print(" begin");
-      // }
-      // if (stop){
-      // Serial.print(" stop");
-      // }
       Serial.print(newTime/1000-startMillis);
       Serial.print(",");
       Serial.print(cart_position, 4);
