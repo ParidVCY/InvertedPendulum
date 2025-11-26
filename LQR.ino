@@ -57,10 +57,6 @@ const unsigned long interval = 10;   // For Serial.print() every 10ms
 float tunerA             = 7;
 float tunerV             = 0.45;//0.45;
 //================= GAINS (LQR) =================//
-// float k1 = -0.3162;  // example gain
-// float k2 = 22.3773;
-// float k3 = -0.9541;
-// float k4 = 3.0668;
 float k1 = -1;  // example gain
 float k2 = 24.3006;
 float k3 = -1.7476;
@@ -83,18 +79,6 @@ void setup() {
   encoder.clearCount();
   digitalWrite(dirPin, LOW);
 
-  // Create control task on Core 1
-  // xTaskCreatePinnedToCore(
-  //   controlTask,
-  //   "Control Task",
-  //   10000,
-  //   NULL,
-  //   1,
-  //   &ControlTaskHandle,
-  //   1  // Core 1
-  // );
-
-  // Create print task on Core 0
   xTaskCreatePinnedToCore(
     printTask,
     "Print Task",
@@ -136,19 +120,6 @@ void loop() {
       return;
     }
     
-    // float newAngle = theta;
-    // dTheta = (newAngle - oldAngle);
-    // oldAngle = newAngle;
-
-    // // angular_velo = (dTheta / dt) * 1000.0;  // rad/s
-    // float new_angular_velo = (dTheta / dt) * 1000.0;  // rad/s
-    // angular_velo = 0.3 * new_angular_velo + (1 - 0.3) * angular_velo;
-
-    // float newTheta_dot = angular_velo;
-    // dTheta_dot = (newTheta_dot - oldTheta_dot);
-    // oldTheta_dot = newTheta_dot;
-
-    // angular_ac = (dTheta_dot / dt) * 1000.0;  // rad/s^2
 
 ///////////////limit x position////////////////////////////////
 //****recommend to use limit switch to determine whether it need to home
@@ -210,27 +181,12 @@ void loop() {
     //////////////////////////Control Part Begin//////////////////////////////////
       if (begin) {
         alpha = 0.15;
-        // static int counter, toggle, toggle_add = 1;
-        // static float ref_2;
-        // ref_2 = 0;
-        // counter++;
-        // if (counter >= 10) {
-        //   float offset_temp = offset;
-        //   offset = ref_2 + cart_position;
-        //   offset_dot = (offset - offset_temp) * 1000 / dt / counter;
-        //   offset_sum = offset_sum + offset / 1000 * dt * counter;
-
-        //   C2_u = (offset * ckp) + (offset_dot * ckd) + (offset_sum * cki);
-        //   counter = 0;
-        // }
         float x1 = cart_position;
         float x2 = theta - M_PI;
         float x3 = cart_velo;
         float x4 = angular_velo;  
         cart_ac = constrain(-(k1 * x1 + k2 * x2 + k3 * x3 + k4 * x4), -tunerA, tunerA);
         cart_velo = constrain(cart_velo + cart_ac * (float)dt * 0.001, -tunerV, tunerV);
-        // cart_ac = -(k1 * x1 + k2 * x2 + k3 * x3 + k4 * x4);
-        // cart_velo = cart_velo + (0.2152*(cart_ac*cart_ac) + 0.9988*cart_ac + 0.0002) * (float)dt * 0.001;
       }
     //////////////////////////Control Part End//////////////////////////////////
     //////////////////////////Swing Up Begin//////////////////////////////////
@@ -269,12 +225,7 @@ void loop() {
           else if (millis() - startMillis < duration){
             cart_ac = -exite_a;
           }
-          // else if (millis() - startMillis < 4*duration/4 + 100){
-          //   cart_ac = exite_a;
-          // }
-          // else if (millis() - startMillis < 5*duration/5){
-          //   cart_ac = 0;
-          // }
+
           else{
             excite = false;
           }
@@ -282,17 +233,6 @@ void loop() {
         cart_velo = cart_velo + cart_ac * (float)dt * 0.001;  // m/s
       }
     //////////////////////////Swing Up End//////////////////////////////////
-    // else{
-    //   cart_velo = 0;
-    // }
-
-    //check infinite spin
-    // helicopter += sgn(angular_velo);
-    // if (helicopter == 1000 && stop == false){
-    //   stop = true;
-    //   helicopter = 0;
-    // }
-
       if (stop){
         if (stopFlag){
           capturedTime = millis();
@@ -336,17 +276,6 @@ void printTask(void *parameter) {
     while (thetaP < 0) thetaP += 360;
     while (thetaP >= 360) thetaP -= 360;
     if (start) {
-      // ตัวอย่างการพิมพ์ CSV
-      // if (home){
-      // Serial.print("home");
-      // }
-      // if (begin){
-      // Serial.print(" begin");
-      // }
-      // if (stop){
-      // Serial.print(" stop");
-      // }
-      // Serial.print(" newTime: ");
       Serial.print(newTime/1000-startMillis);
       Serial.print(",");
       Serial.print(cart_position, 4);
